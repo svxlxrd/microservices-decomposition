@@ -42,7 +42,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := h.service.Register(r.Context(), req)
+	response, err := h.svc.Register(r.Context(), req)
 	if err != nil {
 		switch err {
 		case service.ErrUserExists:
@@ -87,7 +87,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := h.service.Login(r.Context(), req)
+	resp, err := h.svc.Login(r.Context(), req)
 	if err != nil {
 		switch {
 		case errors.Is(err, service.ErrInvalidCredentials):
@@ -104,7 +104,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r.Context())
 
-	user, err := h.service.GetProfile(r.Context(), userID)
+	user, err := h.svc.GetProfile(r.Context(), userID)
 	if err != nil {
 		switch err {
 		case service.ErrUserNotFound:
@@ -127,7 +127,7 @@ func (h *AuthHandler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.service.UpdateProfile(r.Context(), userID, req)
+	user, err := h.svc.UpdateProfile(r.Context(), userID, req)
 	if err != nil {
 		switch err {
 		case service.ErrUserNotFound:

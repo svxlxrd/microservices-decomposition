@@ -16,12 +16,12 @@ const (
 )
 
 type AuthHandler struct {
-	service *service.UserService
+	svc *service.UserService
 }
 
 func NewAuthHandler(svc *service.UserService) *AuthHandler {
 	return &AuthHandler{
-		service: svc,
+		svc: svc,
 	}
 }
 
@@ -38,10 +38,12 @@ func writeJSON(w http.ResponseWriter, status int, data interface{}) {
 func writeError(w http.ResponseWriter, r *http.Request, status int, code, message string) {
 	requestID, _ := r.Context().Value(requestIDKey).(string)
 
-	response := domain.ErrorResponse{
-		Code:      code,
-		Message:   message,
-		RequestID: requestID,
+	response := map[string]domain.ErrorResponse{
+		"error": {
+			Code:      code,
+			Message:   message,
+			RequestID: requestID,
+		},
 	}
 
 	writeJSON(w, status, response)
@@ -57,7 +59,9 @@ func writeValidationError(w http.ResponseWriter, r *http.Request, details []doma
 		RequestID: requestID,
 	}
 
-	writeJSON(w, http.StatusBadRequest, response)
+	writeJSON(w, http.StatusBadRequest, map[string]domain.ErrorResponse{
+		"error": response,
+	})
 }
 
 func decodeJSON(r *http.Request, v interface{}) error {
