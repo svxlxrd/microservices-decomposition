@@ -12,6 +12,9 @@ import (
 	"time"
 
 	"bookshelf/auth-service/internal/config"
+	"bookshelf/auth-service/internal/handler"
+	"bookshelf/auth-service/internal/repository"
+	"bookshelf/auth-service/internal/service"
 
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
@@ -33,10 +36,24 @@ func main() {
 	db.SetConnMaxLifetime(5 * time.Minute)
 	log.Println("Connected to database")
 
-	// routing
+	// repository
+	userRepo := repository.NewUserRepository(db)
+
+	// service
+	userService := service.NewUserService(
+		userRepo,
+		cfg.JWT.Secret,
+	)
+
+	// handler
+	authHandler := handler.NewAuthHandler(userService)
+
+	// router
 	r := chi.NewRouter()
+
+	// global middleware
 	r.Use(middleware.Logger)
-	r.Use(middleware.Timeout(60 * time.Second))
+	r.Use(middleware.Recoverer)
 
 	// health handler
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -50,6 +67,20 @@ func main() {
 		if err := json.NewEncoder(w).Encode(resp); err != nil {
 			log.Println("failed to encode response:", err)
 		}
+	})
+
+	// public routes
+	r.Route("/api/v1/auth", func(r chi.Router) {
+		r.Post("/register", authHandler.Register)
+		r.Post("/login", authHandler.Login)
+	})
+
+	// protected routes
+	r.Group(func(r chi.Router) {
+		r.Use(authHandler.AuthMiddleware)
+
+		r.Get("/api/v1/users/me", authHandler.GetMe)
+		r.Put("/api/v1/users/me", authHandler.UpdateMe)
 	})
 
 	// graceful shutdown
