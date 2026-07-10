@@ -6,9 +6,9 @@ import (
 )
 
 type Config struct {
-	Port        string
-	DatabaseURL string
-	JWTSecret   string
+	Port     ServerConfig
+	Database DatabaseConfig
+	JWT      JWTConfig
 }
 
 type ServerConfig struct {
@@ -35,13 +35,13 @@ func Load() *Config {
 			WriteTimeout: getDuration("WRITE_TIMEOUT", 10*time.Second),
 			IdleTimeout:  getDuration("IDLE_TIMEOUT", 60*time.Second),
 		},
-		DatabaseURL: DatabaseConfig{
+		Database: DatabaseConfig{
 			URL: getEnv(
 				"DATABASE_URL",
 				"postgres://postgres:postgres@localhost:5432/auth?sslmode=disable",
 			),
 		},
-		JWTSecret: JWTConfig{
+		JWT: JWTConfig{
 			Secret: getEnv("JWT_SECRET", "mock"),
 		},
 	}
