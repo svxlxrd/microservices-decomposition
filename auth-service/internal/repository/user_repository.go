@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"bookshelf/auth-service/internal/domain"
 	"context"
 	"database/sql"
 	"errors"

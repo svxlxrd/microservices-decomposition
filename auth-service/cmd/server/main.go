@@ -54,11 +54,11 @@ func main() {
 
 	// graceful shutdown
 	srv := &http.Server{
-		Addr:    ":" + cfg.Port,
-		Handler: r,
-		// ReadTimeout:  cfg.Server.ReadTimeout,
-		// WriteTimeout: cfg.Server.WriteTimeout,
-		// IdleTimeout:  cfg.Server.IdleTimeout,
+		Addr:         ":" + cfg.Server.Port,
+		Handler:      r,
+		ReadTimeout:  cfg.Server.ReadTimeout,
+		WriteTimeout: cfg.Server.WriteTimeout,
+		IdleTimeout:  cfg.Server.IdleTimeout,
 	}
 
 	go func() {

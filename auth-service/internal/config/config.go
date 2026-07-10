@@ -6,7 +6,7 @@ import (
 )
 
 type Config struct {
-	Port     ServerConfig
+	Server   ServerConfig
 	Database DatabaseConfig
 	JWT      JWTConfig
 }
@@ -28,7 +28,6 @@ type JWTConfig struct {
 
 func Load() *Config {
 	return &Config{
-		Port: getEnv("PORT", "8081"),
 		Server: ServerConfig{
 			Port:         getEnv("PORT", "8081"),
 			ReadTimeout:  getDuration("READ_TIMEOUT", 5*time.Second),
