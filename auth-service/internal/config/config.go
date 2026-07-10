@@ -7,8 +7,8 @@ import (
 
 type Config struct {
 	Server   ServerConfig
-	// Database DatabaseConfig
-	// JWT      JWTConfig
+	Database DatabaseConfig
+	JWT      JWTConfig
 }
 
 type ServerConfig struct {
@@ -18,13 +18,13 @@ type ServerConfig struct {
 	IdleTimeout  time.Duration
 }
 
-// type DatabaseConfig struct {
-// 	URL string
-// }
+type DatabaseConfig struct {
+	URL string
+}
 
-// type JWTConfig struct {
-// 	Secret string
-// }
+type JWTConfig struct {
+	Secret string
+}
 
 func Load() *Config {
 	return &Config{
@@ -34,15 +34,15 @@ func Load() *Config {
 			WriteTimeout: getDuration("WRITE_TIMEOUT", 10*time.Second),
 			IdleTimeout:  getDuration("IDLE_TIMEOUT", 60*time.Second),
 		},
-		// Database: DatabaseConfig{
-		// 	URL: getEnv(
-		// 		"DATABASE_URL",
-		// 		"postgres://postgres:postgres@localhost:5432/bookshelf?sslmode=disable",
-		// 	),
-		// },
-		// JWT: JWTConfig{
-		// 	Secret: getEnv("JWT_SECRET", "mock"),
-		// },
+		Database: DatabaseConfig{
+			URL: getEnv(
+				"DATABASE_URL",
+				"postgres://postgres:postgres@localhost:5432/bookshelf?sslmode=disable",
+			),
+		},
+		JWT: JWTConfig{
+			Secret: getEnv("JWT_SECRET", "mock"),
+		},
 	}
 }
 
