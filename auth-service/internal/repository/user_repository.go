@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 )
 
@@ -156,28 +155,4 @@ func (r *UserRepository) UsernameExists(ctx context.Context, username string) (b
 	}
 
 	return exists, nil
-}
-
-func (r *UserRepository) GetByIDs(ctx context.Context, ids []string) (map[string]*domain.User, error) {
-	if len(ids) == 0 {
-		return make(map[string]*domain.User), nil
-	}
-
-	query := `
-		SELECT id, username, email, created_at, updated_at 
-		FROM users 
-		WHERE id = ANY($1)`
-
-	var users []*domain.User
-	err := r.db.SelectContext(ctx, &users, query, pq.Array(ids))
-	if err != nil {
-		return nil, fmt.Errorf("failed to get users by ids: %w", err)
-	}
-
-	result := make(map[string]*domain.User, len(users))
-	for _, u := range users {
-		result[u.ID] = u
-	}
-
-	return result, nil
 }

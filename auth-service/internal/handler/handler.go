@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 )
 
 type contextKey string
@@ -71,4 +72,36 @@ func decodeJSON(r *http.Request, v interface{}) error {
 func getUserID(ctx context.Context) string {
 	userID := ctx.Value(userIDKey).(string)
 	return userID
+}
+
+// middleware
+
+func (h *AuthHandler) AuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+
+		if authHeader == "" {
+			writeError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "Authorization header required")
+			return
+		}
+
+		parts := strings.Split(authHeader, " ")
+
+		if len(parts) != 2 || !strings.EqualFold(parts[0], "bearer") {
+			writeError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "Authorization header required")
+			return
+		}
+
+		token := parts[1]
+
+		userID, err := h.svc.ValidateToken(token)
+		if err != nil {
+			writeError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "Invalid or expired token")
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), userIDKey, userID)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

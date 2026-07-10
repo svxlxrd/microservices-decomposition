@@ -34,6 +34,7 @@ func NewUserService(repo *repository.UserRepository, jwtSecret string) *UserServ
 	}
 }
 
+// tokens
 func (s *UserService) generateAccessToken(userID string) (string, error) {
 	claims := jwt.MapClaims{
 		"sub": userID,
@@ -51,6 +52,43 @@ func (s *UserService) generateAccessToken(userID string) (string, error) {
 	return signedToken, nil
 }
 
+func (s *UserService) ValidateToken(tokenString string) (string, error) {
+	token, err := jwt.Parse(tokenString,
+		func(t *jwt.Token) (interface{}, error) {
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method")
+			}
+
+			return []byte(s.jwtSecret), nil
+		})
+
+	if err != nil {
+		return "", fmt.Errorf("invalid token: %w", err)
+	}
+
+	if !token.Valid {
+		return "", fmt.Errorf("invalid token")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return "", fmt.Errorf("invalid token claims")
+	}
+
+	if exp, ok := claims["exp"].(float64); ok {
+		if int64(exp) < time.Now().Unix() {
+			return "", fmt.Errorf("token expired")
+		}
+	}
+
+	sub, ok := claims["sub"].(string)
+	if !ok || sub == "" {
+		return "", fmt.Errorf("invalid subject")
+	}
+
+	return sub, nil
+}
+
 func (s *UserService) createAuthResponse(user *domain.User) (*domain.AuthResponse, error) {
 	token, err := s.generateAccessToken(user.ID)
 	if err != nil {
@@ -65,6 +103,7 @@ func (s *UserService) createAuthResponse(user *domain.User) (*domain.AuthRespons
 	}, nil
 }
 
+// main logic
 func (s *UserService) Register(ctx context.Context, req domain.RegisterRequest) (*domain.AuthResponse, error) {
 	if len(req.Username) < 3 {
 		return nil, ErrInvalidUsername
