@@ -11,9 +11,10 @@ import (
 	"syscall"
 	"time"
 
+	"bookshelf/auth-service/internal/config"
+
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
-	"bookshelf/auth-service/internal/config"
 )
 
 func main() {
@@ -41,11 +42,11 @@ func main() {
 
 	// graceful shutdown
 	srv := &http.Server{
-		Addr:         ":" + cfg.Server.Port,
-		Handler:      r,
-		ReadTimeout:  cfg.Server.ReadTimeout,
-		WriteTimeout: cfg.Server.WriteTimeout,
-		IdleTimeout:  cfg.Server.IdleTimeout,
+		Addr:    ":" + cfg.Port,
+		Handler: r,
+		// ReadTimeout:  cfg.Server.ReadTimeout,
+		// WriteTimeout: cfg.Server.WriteTimeout,
+		// IdleTimeout:  cfg.Server.IdleTimeout,
 	}
 
 	go func() {
