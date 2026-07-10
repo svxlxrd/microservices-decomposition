@@ -34,7 +34,7 @@ func NewUserService(repo *repository.UserRepository, jwtSecret string) *UserServ
 	}
 }
 
-func (s *UserService) generateToken(userID string) (string, error) {
+func (s *UserService) generateAccessToken(userID string) (string, error) {
 	claims := jwt.MapClaims{
 		"sub": userID,
 		"exp": time.Now().Add(time.Hour).Unix(),
@@ -138,7 +138,7 @@ func (s *UserService) Register(ctx context.Context, req domain.RegisterRequest) 
 	}
 
 	// генерация токена
-	token, err := s.generateToken(createdUser.ID)
+	token, err := s.generateAccessToken(createdUser.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +169,7 @@ func (s *UserService) Login(ctx context.Context, req domain.LoginRequest) (*doma
 		return nil, ErrInvalidCredentials
 	}
 
-	token, err := s.generateToken(user.ID)
+	token, err := s.generateAccessToken(user.ID)
 	if err != nil {
 		return nil, err
 	}
