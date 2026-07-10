@@ -29,7 +29,7 @@ type UserSummary struct {
 
 // ==========  DTO ==========
 
-// RegisterReuest данные для регистрации нового пользователя
+// RegisterRequest данные для регистрации нового пользователя
 type RegisterRequest struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
@@ -47,7 +47,7 @@ type UpdateUserRequest struct {
 	Username string `json:"username,omitempty"`
 }
 
-// AuthReponse ответ при успешной регистрации/логине
+// AuthResponse ответ при успешной регистрации/логине
 type AuthResponse struct {
 	AccessToken string     `json:"access_token"`
 	TokenType   string     `json:"token_type"`
