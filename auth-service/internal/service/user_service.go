@@ -37,7 +37,7 @@ func NewUserService(repo *repository.UserRepository, jwtSecret string) *UserServ
 func (s *UserService) generateAccessToken(userID string) (string, error) {
 	claims := jwt.MapClaims{
 		"sub": userID,
-		"exp": time.Now().Add(time.Hour).Unix(),
+		"exp": time.Now().Add(24 * time.Hour).Unix(),
 		"iat": time.Now().Unix(),
 	}
 
