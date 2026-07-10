@@ -51,45 +51,21 @@ func (s *UserService) generateAccessToken(userID string) (string, error) {
 	return signedToken, nil
 }
 
-func (s *UserService) ValidateToken(tokenString string) (string, error) {
-	token, err := jwt.Parse(tokenString,
-		func(t *jwt.Token) (interface{}, error) {
-			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method")
-			}
-
-			return []byte(s.jwtSecret), nil
-		})
-
+func (s *UserService) createAuthResponse(user *domain.User) (*domain.AuthResponse, error) {
+	token, err := s.generateAccessToken(user.ID)
 	if err != nil {
-		return "", fmt.Errorf("invalid token: %w", err)
+		return nil, err
 	}
 
-	if !token.Valid {
-		return "", fmt.Errorf("invalid token")
-	}
-
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return "", fmt.Errorf("invalid token claims")
-	}
-
-	if exp, ok := claims["exp"].(float64); ok {
-		if int64(exp) < time.Now().Unix() {
-			return "", fmt.Errorf("token expired")
-		}
-	}
-
-	sub, ok := claims["sub"].(string)
-	if !ok || sub == "" {
-		return "", fmt.Errorf("invalid subject")
-	}
-
-	return sub, nil
+	return &domain.AuthResponse{
+		AccessToken: token,
+		TokenType:   "access",
+		ExpiresIn:   24 * time.Hour,
+		User:        user.ToPublic(),
+	}, nil
 }
 
 func (s *UserService) Register(ctx context.Context, req domain.RegisterRequest) (*domain.AuthResponse, error) {
-	// валидация
 	if len(req.Username) < 3 {
 		return nil, ErrInvalidUsername
 	}
@@ -102,11 +78,11 @@ func (s *UserService) Register(ctx context.Context, req domain.RegisterRequest) 
 		return nil, ErrInvalidEmail
 	}
 
-	// проверка уникальности
 	emailExists, err := s.repo.EmailExists(ctx, req.Email)
 	if err != nil {
 		return nil, err
 	}
+
 	if emailExists {
 		return nil, ErrUserExists
 	}
@@ -115,21 +91,23 @@ func (s *UserService) Register(ctx context.Context, req domain.RegisterRequest) 
 	if err != nil {
 		return nil, err
 	}
+
 	if usernameExists {
 		return nil, ErrUsernameExists
 	}
 
-	// хеширование пароля
-	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	passwordHash, err := bcrypt.GenerateFromPassword(
+		[]byte(req.Password),
+		bcrypt.DefaultCost,
+	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate hash: %w", err)
+		return nil, fmt.Errorf("hash password: %w", err)
 	}
 
-	// создание пользователя
 	user := &domain.User{
 		Username:     req.Username,
 		Email:        req.Email,
-		PasswordHash: string(hash),
+		PasswordHash: string(passwordHash),
 	}
 
 	createdUser, err := s.repo.Create(ctx, user)
@@ -137,23 +115,9 @@ func (s *UserService) Register(ctx context.Context, req domain.RegisterRequest) 
 		return nil, err
 	}
 
-	// генерация токена
-	token, err := s.generateAccessToken(createdUser.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	// генерируем токен и возвращаем ответ
-	return &domain.AuthResponse{
-		AccessToken: token,
-		TokenType:   "access",
-		ExpiresIn:   1 * time.Hour,
-		User: domain.UserPublic{
-			Username: user.Username,
-			Email:    user.Email,
-		},
-	}, nil
+	return s.createAuthResponse(createdUser)
 }
+
 
 func (s *UserService) Login(ctx context.Context, req domain.LoginRequest) (*domain.AuthResponse, error) {
 	if req.Email == "" {
@@ -165,24 +129,17 @@ func (s *UserService) Login(ctx context.Context, req domain.LoginRequest) (*doma
 		return nil, ErrInvalidCredentials
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword(
+		[]byte(user.PasswordHash),
+		[]byte(req.Password),
+	); err != nil {
 		return nil, ErrInvalidCredentials
 	}
 
-	token, err := s.generateAccessToken(user.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &domain.AuthResponse{
-		AccessToken: token,
-		TokenType:   "access",
-		ExpiresIn:   1 * time.Hour,
-		User:        user.ToPublic(),
-	}, nil
+	return s.createAuthResponse(user)
 }
 
-func (s *UserService) GetByID(ctx context.Context, userID string) (*domain.User, error) {
+func (s *UserService) GetProfile(ctx context.Context, userID string) (*domain.UserPublic, error) {
 	user, err := s.repo.GetByID(ctx, userID)
 	if err != nil {
 		switch {
@@ -193,13 +150,21 @@ func (s *UserService) GetByID(ctx context.Context, userID string) (*domain.User,
 		}
 	}
 
-	return user, nil
+	public := user.ToPublic()
+
+	return &public, nil
 }
 
-func (s *UserService) Update(ctx context.Context, userID string, req domain.UpdateUserRequest) (*domain.User, error) {
+func (s *UserService) UpdateProfile(ctx context.Context, userID string, req domain.UpdateUserRequest) (*domain.UserPublic, error) {
+
 	user, err := s.repo.GetByID(ctx, userID)
 	if err != nil {
-		return nil, err
+		switch {
+		case errors.Is(err, repository.ErrUserNotFound):
+			return nil, ErrUserNotFound
+		default:
+			return nil, fmt.Errorf("get user: %w", err)
+		}
 	}
 
 	if req.Username != "" {
@@ -221,10 +186,11 @@ func (s *UserService) Update(ctx context.Context, userID string, req domain.Upda
 		user.Username = req.Username
 	}
 
-	// 4. Сохраняем
-	if err = s.repo.Update(ctx, user); err != nil {
-		return nil, err
+	if err := s.repo.Update(ctx, user); err != nil {
+		return nil, fmt.Errorf("update user: %w", err)
 	}
 
-	return user, nil
+	public := user.ToPublic()
+
+	return &public, nil
 }
