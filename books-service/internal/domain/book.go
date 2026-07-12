@@ -9,10 +9,10 @@ import (
 
 // Book основная доменная модель книги для хранения в БД
 type Book struct {
-	ID        string `json:"id" db:"id"`
-	Title     string `json:"title" db:"title"`
-	Author    string `json:"author" db:"author"`
-	CreatedBy string `json:"created_by" db:"created_by"`
+	ID     string `json:"id" db:"id"`
+	Title  string `json:"title" db:"title"`
+	Author string `json:"author" db:"author"`
+	UserID string `json:"user_id" db:"user_id"`
 
 	Description   sql.NullString  `json:"description" db:"description"`
 	ISBN          sql.NullString  `json:"isbn" db:"isbn"`
