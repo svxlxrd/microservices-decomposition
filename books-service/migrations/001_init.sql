@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS books (
     description TEXT,
     isbn VARCHAR(20),
     published_year INTEGER,
-    created_by UUID NOT NULL,  -- References user in Auth Service
+    user_id UUID NOT NULL,  -- References user in Auth Service
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
