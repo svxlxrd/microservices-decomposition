@@ -33,7 +33,7 @@ func Load() *Config {
 		Database: DatabaseConfig{
 			URL: getEnv(
 				"DATABASE_URL",
-				"postgres://postgres:postgres@localhost:5432/auth?sslmode=disable",
+				"postgres://postgres:postgres@localhost:5434/auth?sslmode=disable",
 			),
 		},
 		AuthServiceURL: getEnv("AuthServiceURL", "http://localhost:8081"),
