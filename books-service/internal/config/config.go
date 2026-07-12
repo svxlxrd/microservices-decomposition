@@ -6,36 +6,40 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
+	Port        string
+	DatabaseURL string
+	// Server   ServerConfig
+	// Database DatabaseConfig
 	AuthServiceURL string
 }
 
-type ServerConfig struct {
-	Port         string
-	ReadTimeout  time.Duration
-	WriteTimeout time.Duration
-	IdleTimeout  time.Duration
-}
+// type ServerConfig struct {
+// 	Port         string
+// 	ReadTimeout  time.Duration
+// 	WriteTimeout time.Duration
+// 	IdleTimeout  time.Duration
+// }
 
-type DatabaseConfig struct {
-	URL string
-}
+// type DatabaseConfig struct {
+// 	URL string
+// }
 
 func Load() *Config {
 	return &Config{
-		Server: ServerConfig{
-			Port:         getEnv("PORT", "8082"),
-			ReadTimeout:  getDuration("READ_TIMEOUT", 5*time.Second),
-			WriteTimeout: getDuration("WRITE_TIMEOUT", 10*time.Second),
-			IdleTimeout:  getDuration("IDLE_TIMEOUT", 60*time.Second),
-		},
-		Database: DatabaseConfig{
-			URL: getEnv(
-				"DATABASE_URL",
-				"postgres://postgres:postgres@localhost:5432/auth?sslmode=disable",
-			),
-		},
+		Port: "8082",
+		DatabaseURL: "postgres://postgres:postgres@localhost:5432/auth?sslmode=disable",
+		// Server: ServerConfig{
+		// 	Port:         getEnv("PORT", "8082"),
+		// 	ReadTimeout:  getDuration("READ_TIMEOUT", 5*time.Second),
+		// 	WriteTimeout: getDuration("WRITE_TIMEOUT", 10*time.Second),
+		// 	IdleTimeout:  getDuration("IDLE_TIMEOUT", 60*time.Second),
+		// },
+		// Database: DatabaseConfig{
+		// 	URL: getEnv(
+		// 		"DATABASE_URL",
+		// 		"postgres://postgres:postgres@localhost:5432/auth?sslmode=disable",
+		// 	),
+		// },
 		AuthServiceURL: getEnv("AuthServiceURL", "http://localhost:8081"),
 	}
 }
