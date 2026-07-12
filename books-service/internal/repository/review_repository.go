@@ -160,3 +160,21 @@ func (r *ReviewRepository) Delete(ctx context.Context, id string) error {
 
 	return nil
 }
+
+func (r *ReviewRepository) UserHasReviewedBook(ctx context.Context, userID, bookID string) (bool, error) {
+	query := `
+	SELECT EXISTS (
+		SELECT 1
+		FROM reviews
+		WHERE user_id = $1 AND book_id = $2
+	)`
+
+	var exists bool
+
+	err := r.db.GetContext(ctx, &exists, query, userID, bookID)
+	if err != nil {
+		return false, fmt.Errorf("failed to check user review existence: %w", err)
+	}
+
+	return exists, nil
+}
