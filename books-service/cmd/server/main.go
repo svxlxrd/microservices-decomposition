@@ -23,7 +23,7 @@ func main() {
 	cfg := config.Load()
 
 	// DB
-	db, err := sqlx.Connect("postgres", cfg.DatabaseURL)
+	db, err := sqlx.Connect("postgres", cfg.Database.URL)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -72,7 +72,7 @@ func main() {
 
 	// graceful shutdown
 	srv := &http.Server{
-		Addr:         ":" + cfg.Port,
+		Addr:         ":" + cfg.Server.Port,
 		// Handler:      r,
 		// ReadTimeout:  cfg.Server.ReadTimeout,
 		// WriteTimeout: cfg.Server.WriteTimeout,
