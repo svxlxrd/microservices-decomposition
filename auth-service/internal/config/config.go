@@ -6,7 +6,7 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig
+	Server     ServerConfig
 	Database DatabaseConfig
 	JWT      JWTConfig
 }

@@ -18,6 +18,7 @@ import (
 
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -51,14 +52,37 @@ func main() {
 	// router
 	r := chi.NewRouter()
 
+	// CORS
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins: []string{
+			"http://localhost:5174",
+		},
+		AllowedMethods: []string{
+			"GET",
+			"POST",
+			"PUT",
+			"DELETE",
+			"OPTIONS",
+		},
+		AllowedHeaders: []string{
+			"Accept",
+			"Authorization",
+			"Content-Type",
+		},
+		ExposedHeaders: []string{
+			"Link",
+		},
+		AllowCredentials: true,
+		MaxAge:           300,
+	}))
+
 	// global middleware
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	// health handler
+	// health / ready handler
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
 
 		resp := map[string]string{
 			"status": "ok",
@@ -66,11 +90,27 @@ func main() {
 
 		if err := json.NewEncoder(w).Encode(resp); err != nil {
 			log.Println("failed to encode response:", err)
+			return
 		}
+	})
+
+	r.Get("/ready", func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+		defer cancel()
+
+		if err := db.PingContext(ctx); err != nil {
+			http.Error(w, "database is unavailable", http.StatusServiceUnavailable)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("READY"))
 	})
 
 	// public routes
 	r.Route("/api/v1/auth", func(r chi.Router) {
+		r.Get("/health", handler.HealthHandler)
+		r.Get("/ready", handler.ReadyHandler(db))
 		r.Post("/register", authHandler.Register)
 		r.Post("/login", authHandler.Login)
 	})
