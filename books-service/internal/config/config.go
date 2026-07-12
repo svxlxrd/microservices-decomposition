@@ -6,8 +6,8 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
+	Server         ServerConfig
+	Database       DatabaseConfig
 	AuthServiceURL string
 }
 
