@@ -16,6 +16,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -72,7 +73,7 @@ func main() {
 
 	// graceful shutdown
 	srv := &http.Server{
-		Addr:         ":" + cfg.Server.Port,
+		Addr: ":" + cfg.Server.Port,
 		// Handler:      r,
 		// ReadTimeout:  cfg.Server.ReadTimeout,
 		// WriteTimeout: cfg.Server.WriteTimeout,
