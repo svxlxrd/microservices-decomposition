@@ -6,9 +6,9 @@ import (
 )
 
 type Config struct {
-	Server     ServerConfig
+	Server   ServerConfig
 	Database DatabaseConfig
-	JWT      JWTConfig
+	AuthServiceURL string
 }
 
 type ServerConfig struct {
@@ -20,10 +20,6 @@ type ServerConfig struct {
 
 type DatabaseConfig struct {
 	URL string
-}
-
-type JWTConfig struct {
-	Secret string
 }
 
 func Load() *Config {
@@ -40,9 +36,7 @@ func Load() *Config {
 				"postgres://postgres:postgres@localhost:5432/auth?sslmode=disable",
 			),
 		},
-		JWT: JWTConfig{
-			Secret: getEnv("JWT_SECRET", "mock"),
-		},
+		AuthServiceURL: getEnv("AuthServiceURL", "http://localhost:8081"),
 	}
 }
 
@@ -62,4 +56,3 @@ func getDuration(key string, def time.Duration) time.Duration {
 	}
 	return def
 }
-
