@@ -19,3 +19,21 @@ type Review struct {
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
+
+// ========== DTO ==========
+
+// CreateReviewRequest данные для создания рецензии
+type CreateReviewRequest struct {
+	Rating  int     `json:"rating"`
+	Title   *string `json:"title"`
+	Content string  `json:"content"`
+}
+
+// UpdateReviewRequest данные для обновления рецензии (все поля опциональные)
+type UpdateReviewRequest struct {
+	Rating  *int    `json:"rating"`
+	Title   *string `json:"title"`
+	Content *string `json:"content"`
+}
+
+
