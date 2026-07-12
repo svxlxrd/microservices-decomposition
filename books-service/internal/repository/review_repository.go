@@ -16,7 +16,7 @@ type ReviewRepository struct {
 	db *sqlx.DB
 }
 
-func NewReviewrepository(db *sqlx.DB) *ReviewRepository {
+func NewReviewRepository(db *sqlx.DB) *ReviewRepository {
 	return &ReviewRepository{
 		db: db,
 	}
@@ -73,7 +73,7 @@ func (r *ReviewRepository) GetByID(ctx context.Context, id string) (*domain.Revi
 	return &review, nil
 }
 
-func (r *ReviewRepository) ListByBookID(ctx context.Context, bookID string, page, limit int) ([]domain.Review, int, error) {
+func (r *ReviewRepository) ListByBookID(ctx context.Context, bookID string) ([]domain.Review, error) {
 	var totalCount int
 
 	totalCountQuery := `
@@ -82,7 +82,7 @@ func (r *ReviewRepository) ListByBookID(ctx context.Context, bookID string, page
 	WHERE book_id = $1;`
 
 	if err := r.db.GetContext(ctx, &totalCount, totalCountQuery, bookID); err != nil {
-		return nil, 0, fmt.Errorf("failed to count reviews %w", err)
+		return nil, fmt.Errorf("failed to count reviews %w", err)
 	}
 
 	// основной запрос
@@ -98,17 +98,15 @@ func (r *ReviewRepository) ListByBookID(ctx context.Context, bookID string, page
 		updated_at
 	FROM reviews
 	WHERE book_id = $1
-	ORDER BY created_at DESC, id DESC
-	LIMIT $2 OFFSET $3;`
+	ORDER BY created_at DESC, id DESC;`
 
 	var reviews []domain.Review
-	offset := (page - 1) * limit
 
-	if err := r.db.SelectContext(ctx, &reviews, query, bookID, limit, offset); err != nil {
-		return nil, 0, fmt.Errorf("failed to list reviews by book ID: %w", err)
+	if err := r.db.SelectContext(ctx, &reviews, query, bookID); err != nil {
+		return nil, fmt.Errorf("failed to list reviews by book ID: %w", err)
 	}
 
-	return reviews, totalCount, nil
+	return reviews, nil
 }
 
 func (r *ReviewRepository) Update(ctx context.Context, review *domain.Review) error {

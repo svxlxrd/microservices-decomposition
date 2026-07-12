@@ -75,18 +75,18 @@ func (r *BookRepository) GetByID(ctx context.Context, id string) (*domain.Book, 
 	return book, nil
 }
 
-func (r *BookRepository) List(ctx context.Context, filter *domain.BookFilter) ([]domain.Book, int, error) {
-	limit := filter.Limit
+func (r *BookRepository) List(ctx context.Context, params domain.ListParams) ([]domain.Book, int, error) {
+	limit := params.Limit
 	if limit <= 0 || limit > 100 {
 		limit = 10
 	}
 
-	offset := (filter.Page - 1) * limit
+	offset := (params.Page - 1) * limit
 	if offset < 0 {
 		offset = 0
 	}
 
-	search := "%" + filter.Search + "%"
+	search := "%" + params.Search + "%"
 
 	query := `
 	SELECT 
@@ -129,9 +129,9 @@ func (r *BookRepository) List(ctx context.Context, filter *domain.BookFilter) ([
 	return books, totalCount, nil
 }
 
-func (r *BookRepository) ListByUserID(ctx context.Context, userID string, filter domain.BookFilter) ([]domain.Book, int, error) {
+func (r *BookRepository) ListByUserID(ctx context.Context, userID string, params domain.ListParams) ([]domain.Book, int, error) {
 
-	offset := (filter.Page - 1) * filter.Limit
+	offset := (params.Page - 1) * params.Limit
 
 	var total int
 	countQuery := `
@@ -161,14 +161,14 @@ func (r *BookRepository) ListByUserID(ctx context.Context, userID string, filter
 
 	args := []any{userID}
 
-	if filter.Search != "" {
+	if params.Search != "" {
 		query += ` AND (title ILIKE $2 OR author ILIKE $2)`
-		args = append(args, "%"+filter.Search+"%")
+		args = append(args, "%"+params.Search+"%")
 	}
 
 	orderBy := "created_at"
 
-	switch filter.Sort {
+	switch params.Sort {
 	case "title":
 		orderBy = "title"
 	case "author":
@@ -178,7 +178,7 @@ func (r *BookRepository) ListByUserID(ctx context.Context, userID string, filter
 	}
 
 	order := "DESC"
-	if filter.Order == "asc" {
+	if params.Order == "asc" {
 		order = "ASC"
 	}
 
@@ -190,7 +190,7 @@ func (r *BookRepository) ListByUserID(ctx context.Context, userID string, filter
 		len(args)+2,
 	)
 
-	args = append(args, filter.Limit, offset)
+	args = append(args, params.Limit, offset)
 
 	var books []domain.Book
 

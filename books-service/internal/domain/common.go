@@ -22,6 +22,14 @@ type ErrorDetail struct {
 	Message string `json:"message"`
 }
 
+type ListParams struct {
+	Search string
+	Sort   string
+	Order  string
+	Page   int
+	Limit  int
+}
+
 // NewPagination создаёт структуру пагинации на основе параметров запроса
 func NewPagination(page, limit, total int) Pagination {
 	p := Pagination{

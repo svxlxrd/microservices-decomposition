@@ -25,13 +25,4 @@ type Book struct {
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
 
-// ========== DTO ==========
 
-// BookFilter параметры фильтрации списка книг
-type BookFilter struct {
-	Search string
-	Sort   string
-	Order  string
-	Page   int
-	Limit  int
-}
