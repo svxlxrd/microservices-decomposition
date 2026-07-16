@@ -27,6 +27,11 @@ type UserSummary struct {
 	Username string `json:"username"`
 }
 
+type TokenClaims struct {
+    UserID    string
+    ExpiresAt time.Time
+}
+
 // ==========  DTO ==========
 
 // RegisterRequest данные для регистрации нового пользователя
