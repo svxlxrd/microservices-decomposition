@@ -160,7 +160,7 @@ func (r *UserRepository) UsernameExists(ctx context.Context, username string) (b
 
 func (r *UserRepository) GetByIDs(ctx context.Context, ids []string) ([]domain.User, error) {
 	if len(ids) == 0 {
-		return nil, nil
+		return make([]domain.User, 0), nil
 	}
 
 	query := `
