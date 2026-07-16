@@ -3,18 +3,9 @@ package service
 import (
 	"context"
 	"database/sql"
-	"errors"
 
 	"bookshelf/books-service/internal/domain"
 	"bookshelf/books-service/internal/repository"
-)
-
-var (
-	ErrReviewNotFound        = errors.New("review not found")
-	ErrNotReviewOwner        = errors.New("not review owner")
-	ErrAlreadyReviewed       = errors.New("already reviewed")
-	ErrInvalidRating         = errors.New("invalid rating")
-	ErrReviewContentTooShort = errors.New("review content too short")
 )
 
 type ReviewService struct {
@@ -22,10 +13,10 @@ type ReviewService struct {
 	bookRepo   *repository.BookRepository
 }
 
-func NewReviewService(reviewRepo *repository.ReviewRepository, bookRepo *repository.BookRepository)*ReviewService {
+func NewReviewService(reviewRepo *repository.ReviewRepository, bookRepo *repository.BookRepository) *ReviewService {
 	return &ReviewService{
 		reviewRepo: reviewRepo,
-		bookRepo: bookRepo,
+		bookRepo:   bookRepo,
 	}
 }
 
@@ -36,9 +27,8 @@ func (s *ReviewService) Create(ctx context.Context, userID string, bookID string
 	}
 
 	if book == nil {
-		return nil, ErrBookNotFound
+		return nil, domain.ErrBookNotFound
 	}
-
 
 	exists, err := s.reviewRepo.UserHasReviewedBook(ctx, userID, bookID)
 	if err != nil {
@@ -46,15 +36,15 @@ func (s *ReviewService) Create(ctx context.Context, userID string, bookID string
 	}
 
 	if exists {
-		return nil, ErrAlreadyReviewed
+		return nil, domain.ErrAlreadyReviewed
 	}
 
 	if req.Rating < 1 || req.Rating > 5 {
-		return nil, ErrInvalidRating
+		return nil, domain.ErrInvalidRating
 	}
 
 	if len(req.Content) < 10 {
-		return nil, ErrReviewContentTooShort
+		return nil, domain.ErrReviewContentTooShort
 	}
 
 	review := &domain.Review{
@@ -86,7 +76,7 @@ func (s *ReviewService) GetByID(ctx context.Context, id string) (*domain.Review,
 	}
 
 	if review == nil {
-		return nil, ErrReviewNotFound
+		return nil, domain.ErrReviewNotFound
 	}
 
 	return review, nil
@@ -109,17 +99,17 @@ func (s *ReviewService) Update(ctx context.Context, userID string, id string, re
 	}
 
 	if review == nil {
-		return nil, ErrReviewNotFound
+		return nil, domain.ErrReviewNotFound
 	}
 
 	if review.UserID != userID {
-		return nil, ErrNotReviewOwner
+		return nil, domain.ErrNotReviewOwner
 	}
 
 	if req.Rating != nil {
 
 		if *req.Rating < 1 || *req.Rating > 5 {
-			return nil, ErrInvalidRating
+			return nil, domain.ErrInvalidRating
 		}
 
 		review.Rating = *req.Rating
@@ -128,7 +118,7 @@ func (s *ReviewService) Update(ctx context.Context, userID string, id string, re
 	if req.Content != nil {
 
 		if len(*req.Content) < 10 {
-			return nil, ErrReviewContentTooShort
+			return nil, domain.ErrReviewContentTooShort
 		}
 
 		review.Content = *req.Content
@@ -158,14 +148,12 @@ func (s *ReviewService) Delete(ctx context.Context, userID string, id string) er
 	}
 
 	if review == nil {
-		return ErrReviewNotFound
+		return domain.ErrReviewNotFound
 	}
 
 	if review.UserID != userID {
-		return ErrNotReviewOwner
+		return domain.ErrNotReviewOwner
 	}
 
 	return s.reviewRepo.Delete(ctx, id)
 }
-
-

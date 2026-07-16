@@ -3,17 +3,9 @@ package service
 import (
 	"context"
 	"database/sql"
-	"errors"
 
 	"bookshelf/books-service/internal/domain"
 	"bookshelf/books-service/internal/repository"
-)
-
-var (
-	ErrBookNotFound    = errors.New("Book not found")
-	ErrNotBookOwner    = errors.New("Not book owner")
-	ErrBookTitleEmpty  = errors.New("Book title empty")
-	ErrBookAuthorEmpty = errors.New("Book author empty")
 )
 
 type BookService struct {
@@ -28,11 +20,11 @@ func NewBookService(repo *repository.BookRepository) *BookService {
 
 func (s *BookService) Create(ctx context.Context, userID string, req domain.CreateBookRequest) (*domain.Book, error) {
 	if req.Author == "" {
-		return nil, ErrBookAuthorEmpty
+		return nil, domain.ErrBookAuthorEmpty
 	}
 
 	if req.Title == "" {
-		return nil, ErrBookTitleEmpty
+		return nil, domain.ErrBookTitleEmpty
 	}
 
 	book := &domain.Book{
@@ -69,7 +61,7 @@ func (s *BookService) GetByID(ctx context.Context, id string) (*domain.Book, err
 	}
 
 	if book == nil {
-		return nil, ErrBookNotFound
+		return nil, domain.ErrBookNotFound
 	}
 
 	return book, nil
@@ -134,16 +126,16 @@ func (s *BookService) Update(ctx context.Context, userID string, bookID string, 
 	}
 
 	if book == nil {
-		return nil, ErrBookNotFound
+		return nil, domain.ErrBookNotFound
 	}
 
 	if book.UserID != userID {
-		return nil, ErrNotBookOwner
+		return nil, domain.ErrNotBookOwner
 	}
 
 	if req.Title != nil {
 		if *req.Title == "" {
-			return nil, ErrBookTitleEmpty
+			return nil, domain.ErrBookTitleEmpty
 		}
 
 		book.Title = *req.Title
@@ -151,7 +143,7 @@ func (s *BookService) Update(ctx context.Context, userID string, bookID string, 
 
 	if req.Author != nil {
 		if *req.Author == "" {
-			return nil, ErrBookAuthorEmpty
+			return nil, domain.ErrBookAuthorEmpty
 		}
 
 		book.Author = *req.Author
@@ -193,11 +185,11 @@ func (s *BookService) Delete(ctx context.Context, userID string, bookID string) 
 	}
 
 	if book == nil {
-		return ErrBookNotFound
+		return domain.ErrBookNotFound
 	}
 
 	if book.UserID != userID {
-		return ErrNotBookOwner
+		return domain.ErrNotBookOwner
 	}
 
 	err = s.bookRepo.Delete(ctx, bookID)
