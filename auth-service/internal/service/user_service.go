@@ -12,16 +12,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var (
-	ErrInvalidCredentials = errors.New("invalid credentials")
-	ErrUsernameExists     = errors.New("username already exists")
-	ErrUserExists         = errors.New("user already exists")
-	ErrInvalidPassword    = errors.New("invalid password")
-	ErrInvalidUsername    = errors.New("invalid username")
-	ErrInvalidEmail       = errors.New("invalid email")
-	ErrUserNotFound       = errors.New("user not found")
-)
-
 type UserService struct {
 	repo      *repository.UserRepository
 	jwtSecret string
@@ -106,15 +96,15 @@ func (s *UserService) createAuthResponse(user *domain.User) (*domain.AuthRespons
 // main logic
 func (s *UserService) Register(ctx context.Context, req domain.RegisterRequest) (*domain.AuthResponse, error) {
 	if len(req.Username) < 3 {
-		return nil, ErrInvalidUsername
+		return nil, domain.ErrInvalidUsername
 	}
 
 	if len(req.Password) < 8 {
-		return nil, ErrInvalidPassword
+		return nil, domain.ErrInvalidPassword
 	}
 
 	if req.Email == "" {
-		return nil, ErrInvalidEmail
+		return nil, domain.ErrInvalidEmail
 	}
 
 	emailExists, err := s.repo.EmailExists(ctx, req.Email)
@@ -123,7 +113,7 @@ func (s *UserService) Register(ctx context.Context, req domain.RegisterRequest) 
 	}
 
 	if emailExists {
-		return nil, ErrUserExists
+		return nil, domain.ErrUserExists
 	}
 
 	usernameExists, err := s.repo.UsernameExists(ctx, req.Username)
@@ -132,7 +122,7 @@ func (s *UserService) Register(ctx context.Context, req domain.RegisterRequest) 
 	}
 
 	if usernameExists {
-		return nil, ErrUsernameExists
+		return nil, domain.ErrUsernameExists
 	}
 
 	passwordHash, err := bcrypt.GenerateFromPassword(
@@ -160,19 +150,19 @@ func (s *UserService) Register(ctx context.Context, req domain.RegisterRequest) 
 
 func (s *UserService) Login(ctx context.Context, req domain.LoginRequest) (*domain.AuthResponse, error) {
 	if req.Email == "" {
-		return nil, ErrInvalidEmail
+		return nil, domain.ErrInvalidEmail
 	}
 
 	user, err := s.repo.GetByEmail(ctx, req.Email)
 	if err != nil {
-		return nil, ErrInvalidCredentials
+		return nil, domain.ErrInvalidCredentials
 	}
 
 	if err := bcrypt.CompareHashAndPassword(
 		[]byte(user.PasswordHash),
 		[]byte(req.Password),
 	); err != nil {
-		return nil, ErrInvalidCredentials
+		return nil, domain.ErrInvalidCredentials
 	}
 
 	return s.createAuthResponse(user)
@@ -183,7 +173,7 @@ func (s *UserService) GetProfile(ctx context.Context, userID string) (*domain.Us
 	if err != nil {
 		switch {
 		case errors.Is(err, repository.ErrUserNotFound):
-			return nil, ErrUserNotFound
+			return nil, domain.ErrUserNotFound
 		default:
 			return nil, fmt.Errorf("get user: %w", err)
 		}
@@ -200,7 +190,7 @@ func (s *UserService) UpdateProfile(ctx context.Context, userID string, req doma
 	if err != nil {
 		switch {
 		case errors.Is(err, repository.ErrUserNotFound):
-			return nil, ErrUserNotFound
+			return nil, domain.ErrUserNotFound
 		default:
 			return nil, fmt.Errorf("get user: %w", err)
 		}
@@ -208,7 +198,7 @@ func (s *UserService) UpdateProfile(ctx context.Context, userID string, req doma
 
 	if req.Username != "" {
 		if len(req.Username) < 3 {
-			return nil, ErrInvalidUsername
+			return nil, domain.ErrInvalidUsername
 		}
 
 		existingUser, err := s.repo.GetByUsername(ctx, req.Username)
@@ -219,7 +209,7 @@ func (s *UserService) UpdateProfile(ctx context.Context, userID string, req doma
 			return nil, err
 
 		case existingUser.ID != userID:
-			return nil, ErrUsernameExists
+			return nil, domain.ErrUsernameExists
 		}
 
 		user.Username = req.Username

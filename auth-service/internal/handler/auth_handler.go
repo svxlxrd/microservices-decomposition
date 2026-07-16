@@ -2,7 +2,6 @@ package handler
 
 import (
 	"bookshelf/auth-service/internal/domain"
-	"bookshelf/auth-service/internal/service"
 	"errors"
 	"net/http"
 )
@@ -45,11 +44,11 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	response, err := h.svc.Register(r.Context(), req)
 	if err != nil {
 		switch err {
-		case service.ErrUserExists:
+		case domain.ErrUserExists:
 			writeError(w, r, http.StatusConflict, "USER_EXISTS", "user already exists")
-		case service.ErrUsernameExists:
+		case domain.ErrUsernameExists:
 			writeError(w, r, http.StatusConflict, "USERNAME_EXISTS", "username already exists")
-		case service.ErrInvalidUsername, service.ErrInvalidPassword, service.ErrInvalidEmail:
+		case domain.ErrInvalidUsername, domain.ErrInvalidPassword, domain.ErrInvalidEmail:
 			writeError(w, r, http.StatusBadRequest, "VALIDATION_ERROR", err.Error())
 		default:
 			writeError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "internal server error")
@@ -90,7 +89,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	resp, err := h.svc.Login(r.Context(), req)
 	if err != nil {
 		switch {
-		case errors.Is(err, service.ErrInvalidCredentials):
+		case errors.Is(err, domain.ErrInvalidCredentials):
 			writeError(w, r, http.StatusUnauthorized, "INVALID_CREDENTIALS", "invalid email or password")
 		default:
 			writeError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "internal server error")
@@ -107,7 +106,7 @@ func (h *AuthHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 	user, err := h.svc.GetProfile(r.Context(), userID)
 	if err != nil {
 		switch err {
-		case service.ErrUserNotFound:
+		case domain.ErrUserNotFound:
 			writeError(w, r, http.StatusNotFound, "USER_NOT_FOUND", err.Error())
 		default:
 			writeError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "internal server error")
@@ -130,13 +129,13 @@ func (h *AuthHandler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	user, err := h.svc.UpdateProfile(r.Context(), userID, req)
 	if err != nil {
 		switch err {
-		case service.ErrUserNotFound:
+		case domain.ErrUserNotFound:
 			writeError(w, r, http.StatusNotFound, "USER_NOT_FOUND", err.Error())
 
-		case service.ErrUsernameExists:
+		case domain.ErrUsernameExists:
 			writeError(w, r, http.StatusConflict, "USERNAME_EXISTS", err.Error())
 
-		case service.ErrInvalidUsername:
+		case domain.ErrInvalidUsername:
 			writeError(w, r, http.StatusBadRequest, "INVALID_USERNAME", err.Error())
 
 		default:
