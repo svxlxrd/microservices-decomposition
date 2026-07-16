@@ -67,7 +67,7 @@ func (h *ReviewHandler) Create(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, review)
 }
 
-func (h *ReviewHandler) ListBookReviews(w http.ResponseWriter, r *http.Request) {
+func (h *ReviewHandler) List(w http.ResponseWriter, r *http.Request) {
 	bookID := chi.URLParam(r, "book_id")
 
 	reviewList, err := h.svc.ListByBook(r.Context(), bookID)
