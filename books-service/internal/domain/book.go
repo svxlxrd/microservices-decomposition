@@ -39,18 +39,10 @@ type CreateBookRequest struct {
 
 // UpdateBookRequest данные для обновления книги (все поля опциональные)
 type UpdateBookRequest struct {
+	UserID        string  `json:"user_id"`
 	Title         *string `json:"title"`
 	Author        *string `json:"author"`
 	Description   *string `json:"description"`
 	ISBN          *string `json:"isbn"`
 	PublishedYear *int    `json:"published_year"`
-}
-
-// BookFilter параметры фильтрации списка книг
-type BookFilter struct {
-	Search string
-	Sort   string
-	Order  string
-	Page   int
-	Limit  int
 }
