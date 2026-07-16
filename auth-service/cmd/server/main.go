@@ -49,6 +49,7 @@ func main() {
 
 	// handler
 	authHandler := handler.NewAuthHandler(userService)
+	internalHandler := handler.NewInternalHandler(userService)
 
 	// router
 	r := chi.NewRouter()
@@ -106,6 +107,11 @@ func main() {
 
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("READY"))
+	})
+
+	// internal routes
+	r.Route("/internal/v1/auth", func(r chi.Router) {
+		r.Post("/verify", internalHandler.VerifyToken)
 	})
 
 	// public routes
