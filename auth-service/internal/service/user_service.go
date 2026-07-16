@@ -234,3 +234,17 @@ func (s *UserService) UpdateProfile(ctx context.Context, userID string, req doma
 
 	return &public, nil
 }
+
+func (s *UserService) GetUsersByIDs(ctx context.Context, ids []string) ([]domain.UserPublic, error) {
+	users, err := s.repo.GetByIDs(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+
+	usersPublic := make([]domain.UserPublic, 0, len(users))
+	for _, user := range users {
+		usersPublic = append(usersPublic, user.ToPublic())
+	}
+
+	return usersPublic, nil
+}
