@@ -50,3 +50,19 @@ func (h *InternalHandler) VerifyToken(w http.ResponseWriter, r *http.Request) {
 		ExpiresAt: claims.ExpiresAt,
 	})
 }
+
+func (h *InternalHandler) GetUsersByIDs(w http.ResponseWriter, r *http.Request) {
+	var ids []string
+	if err := decodeJSON(r, &ids); err != nil {
+		writeError(w, r, http.StatusBadRequest, "INVALID_REQUEST", "invalid json body")
+		return
+	}
+
+	users, err := h.svc.GetUsersByIDs(r.Context(), ids)
+	if err != nil {
+		writeError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "internal server error")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, users)
+}
