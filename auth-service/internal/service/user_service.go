@@ -42,41 +42,53 @@ func (s *UserService) generateAccessToken(userID string) (string, error) {
 	return signedToken, nil
 }
 
-func (s *UserService) ValidateToken(tokenString string) (string, error) {
-	token, err := jwt.Parse(tokenString,
+func (s *UserService) ValidateToken(token string) (*domain.TokenClaims, error) {
+	t, err := jwt.Parse(
+		token,
 		func(t *jwt.Token) (interface{}, error) {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method")
 			}
 
 			return []byte(s.jwtSecret), nil
-		})
+		},
+	)
 
 	if err != nil {
-		return "", fmt.Errorf("invalid token: %w", err)
+		return nil, fmt.Errorf("invalid token: %w", err)
 	}
 
-	if !token.Valid {
-		return "", fmt.Errorf("invalid token")
+	if !t.Valid {
+		return nil, fmt.Errorf("invalid token")
 	}
 
-	claims, ok := token.Claims.(jwt.MapClaims)
+	claims, ok := t.Claims.(jwt.MapClaims)
 	if !ok {
-		return "", fmt.Errorf("invalid token claims")
+		return nil, fmt.Errorf("invalid token claims")
 	}
 
-	if exp, ok := claims["exp"].(float64); ok {
-		if int64(exp) < time.Now().Unix() {
-			return "", fmt.Errorf("token expired")
-		}
+	// exp
+	exp, ok := claims["exp"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("missing expiration claim")
 	}
 
+	expiresAt := time.Unix(int64(exp), 0)
+
+	if expiresAt.Before(time.Now()) {
+		return nil, fmt.Errorf("token expired")
+	}
+
+	// sub
 	sub, ok := claims["sub"].(string)
 	if !ok || sub == "" {
-		return "", fmt.Errorf("invalid subject")
+		return nil, fmt.Errorf("invalid subject")
 	}
 
-	return sub, nil
+	return &domain.TokenClaims{
+		UserID:    sub,
+		ExpiresAt: expiresAt,
+	}, nil
 }
 
 func (s *UserService) createAuthResponse(user *domain.User) (*domain.AuthResponse, error) {
@@ -146,7 +158,6 @@ func (s *UserService) Register(ctx context.Context, req domain.RegisterRequest) 
 
 	return s.createAuthResponse(createdUser)
 }
-
 
 func (s *UserService) Login(ctx context.Context, req domain.LoginRequest) (*domain.AuthResponse, error) {
 	if req.Email == "" {
