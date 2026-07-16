@@ -3,6 +3,8 @@ package main
 import (
 	"bookshelf/books-service/internal/config"
 	"bookshelf/books-service/internal/handler"
+	"bookshelf/books-service/internal/repository"
+	"bookshelf/books-service/internal/service"
 	"context"
 	"errors"
 	"log"
@@ -33,6 +35,18 @@ func main() {
 	db.SetMaxIdleConns(25)
 	db.SetConnMaxLifetime(5 * time.Minute)
 	log.Println("Connected to database")
+
+	// repositories
+	bookRepo := repository.NewBookRepository(db)
+	reviewRepo := repository.NewReviewRepository(db)
+
+	// services
+	bookService := service.NewBookService(bookRepo)
+	reviewService := service.NewReviewService(reviewRepo, bookRepo)
+
+	// handlers
+	bookHandler := handler.NewBookHandler(bookService)
+	reviewHandler := handler.NewReviewHandler(reviewService)
 
 	// router
 	r := chi.NewRouter()
@@ -66,18 +80,34 @@ func main() {
 	r.Use(middleware.Recoverer)
 
 	// public routes
-	r.Route("/api/v1/auth", func(r chi.Router) {
-		r.Get("/health", handler.HealthHandler)
-		r.Get("/ready", handler.ReadyHandler(db))
+	r.Route("/api/v1", func(r chi.Router) {
+			r.Get("/health", handler.HealthHandler)
+			r.Get("/ready", handler.ReadyHandler(db))
+
+		r.Route("/books", func(r chi.Router) {
+			r.Post("/", bookHandler.Create)
+			r.Get("/", bookHandler.List)
+			r.Get("/{id}", bookHandler.GetByID)
+			r.Put("/{id}", bookHandler.Update)
+			r.Delete("/{id}", bookHandler.Delete)
+
+			r.Post("/{book_id}/reviews", reviewHandler.Create)
+			r.Get("/{book_id}/reviews", reviewHandler.List)
+		})
+
+		r.Route("/reviews", func(r chi.Router) {
+			r.Put("/{id}", reviewHandler.Update)
+			r.Delete("/{id}", reviewHandler.Delete)
+		})
 	})
 
 	// graceful shutdown
 	srv := &http.Server{
-		Addr: ":" + cfg.Server.Port,
-		// Handler:      r,
-		// ReadTimeout:  cfg.Server.ReadTimeout,
-		// WriteTimeout: cfg.Server.WriteTimeout,
-		// IdleTimeout:  cfg.Server.IdleTimeout,
+		Addr:         ":" + cfg.Server.Port,
+		Handler:      r,
+		ReadTimeout:  cfg.Server.ReadTimeout,
+		WriteTimeout: cfg.Server.WriteTimeout,
+		IdleTimeout:  cfg.Server.IdleTimeout,
 	}
 
 	go func() {
