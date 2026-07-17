@@ -4,7 +4,7 @@ import (
 	"bookshelf/books-service/internal/client"
 	"bookshelf/books-service/internal/config"
 	"bookshelf/books-service/internal/handler"
-	authmiddleware "bookshelf/books-service/internal/middleware"
+	authMiddleware "bookshelf/books-service/internal/middleware"
 	"bookshelf/books-service/internal/repository"
 	"bookshelf/books-service/internal/service"
 	"context"
@@ -16,7 +16,7 @@ import (
 	"syscall"
 	"time"
 
-	chimiddleware "github.com/go-chi/chi/middleware"
+	chiMiddleware "github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/jmoiron/sqlx"
@@ -81,8 +81,8 @@ func main() {
 	}))
 
 	// global middleware
-	r.Use(chimiddleware.Logger)
-	r.Use(chimiddleware.Recoverer)
+	r.Use(chiMiddleware.Logger)
+	r.Use(chiMiddleware.Recoverer)
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/health", handler.HealthHandler)
@@ -97,7 +97,7 @@ func main() {
 		// ===== Protected =====
 
 		r.Group(func(r chi.Router) {
-			r.Use(authmiddleware.AuthMiddleware(authClient))
+			r.Use(authMiddleware.AuthMiddleware(authClient))
 
 			r.Post("/books", bookHandler.Create)
 			r.Put("/books/{id}", bookHandler.Update)
