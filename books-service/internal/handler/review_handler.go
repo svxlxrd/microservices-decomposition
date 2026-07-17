@@ -124,11 +124,6 @@ func (h *ReviewHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := decodeJSON(r, &userID); err != nil {
-		writeError(w, r, http.StatusBadRequest, "INVALID_REQUEST", "invalid json body")
-		return
-	}
-
 	if err := h.svc.Delete(r.Context(), userID, reviewID); err != nil {
 		switch {
 		case errors.Is(err, domain.ErrReviewNotFound):
