@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bookshelf/auth-service/internal/domain"
 	"bookshelf/auth-service/internal/service"
 	"net/http"
 	"time"
@@ -28,6 +29,14 @@ type VerifyResponse struct {
 	Error     string    `json:"error,omitempty"`
 }
 
+type GetUsersByIDsRequest struct {
+	IDs []string `json:"ids"`
+}
+
+type GetUsersByIDsResponse struct {
+	Users []domain.UserPublic `json:"users"`
+}
+
 func (h *InternalHandler) VerifyToken(w http.ResponseWriter, r *http.Request) {
 	var req VerifyRequest
 	if err := decodeJSON(r, &req); err != nil {
@@ -52,17 +61,21 @@ func (h *InternalHandler) VerifyToken(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *InternalHandler) GetUsersByIDs(w http.ResponseWriter, r *http.Request) {
-	var ids []string
-	if err := decodeJSON(r, &ids); err != nil {
+	var req GetUsersByIDsRequest
+	if err := decodeJSON(r, &req); err != nil {
 		writeError(w, r, http.StatusBadRequest, "INVALID_REQUEST", "invalid json body")
 		return
 	}
 
-	users, err := h.svc.GetUsersByIDs(r.Context(), ids)
+	users, err := h.svc.GetUsersByIDs(r.Context(), req.IDs)
 	if err != nil {
 		writeError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "internal server error")
 		return
 	}
 
-	writeJSON(w, http.StatusOK, users)
+	resp := GetUsersByIDsResponse{
+		Users: users,
+	}
+
+	writeJSON(w, http.StatusOK, resp)
 }
