@@ -22,6 +22,12 @@ func NewBookHandler(svc *service.BookService) *BookHandler {
 }
 
 func (h *BookHandler) Create(w http.ResponseWriter, r *http.Request) {
+	userID, ok := getUserID(r.Context())
+	if !ok {
+		writeError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "user is not authenticated")
+		return
+	}
+
 	var req domain.CreateBookRequest
 	if err := decodeJSON(r, &req); err != nil {
 		writeError(w, r, http.StatusBadRequest, "INVALID_REQUEST", "invalid json body")
@@ -49,7 +55,7 @@ func (h *BookHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	book, err := h.svc.Create(r.Context(), req.UserID, req)
+	book, err := h.svc.Create(r.Context(), userID, req)
 	if err != nil {
 		switch {
 		case errors.Is(err, domain.ErrBookTitleEmpty),
@@ -123,6 +129,11 @@ func (h *BookHandler) List(w http.ResponseWriter, r *http.Request) {
 
 func (h *BookHandler) Update(w http.ResponseWriter, r *http.Request) {
 	bookID := chi.URLParam(r, "id")
+	userID, ok := getUserID(r.Context())
+	if !ok {
+		writeError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "user is not authenticated")
+		return
+	}
 
 	var req domain.UpdateBookRequest
 	if err := decodeJSON(r, &req); err != nil {
@@ -130,7 +141,7 @@ func (h *BookHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	book, err := h.svc.Update(r.Context(), req.UserID, bookID, req)
+	book, err := h.svc.Update(r.Context(), userID, bookID, req)
 	if err != nil {
 		switch {
 		case errors.Is(err, domain.ErrBookNotFound):
@@ -154,7 +165,11 @@ func (h *BookHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 func (h *BookHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	bookID := chi.URLParam(r, "id")
-	var userID string
+	userID, ok := getUserID(r.Context())
+	if !ok {
+		writeError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "user is not authenticated")
+		return
+	}
 
 	if err := decodeJSON(r, &userID); err != nil {
 		writeError(w, r, http.StatusBadRequest, "INVALID_REQUEST", "invalid json body")

@@ -21,6 +21,11 @@ func NewReviewHandler(svc *service.ReviewService) *ReviewHandler {
 
 func (h *ReviewHandler) Create(w http.ResponseWriter, r *http.Request) {
 	bookID := chi.URLParam(r, "book_id")
+	userID, ok := getUserID(r.Context())
+	if !ok {
+		writeError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "user is not authenticated")
+		return
+	}
 
 	var req domain.CreateReviewRequest
 	if err := decodeJSON(r, &req); err != nil {
@@ -49,7 +54,7 @@ func (h *ReviewHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	review, err := h.svc.Create(r.Context(), req.UserID, bookID, req)
+	review, err := h.svc.Create(r.Context(), userID, bookID, req)
 	if err != nil {
 		switch {
 		case errors.Is(err, domain.ErrBookNotFound):
@@ -81,6 +86,11 @@ func (h *ReviewHandler) List(w http.ResponseWriter, r *http.Request) {
 
 func (h *ReviewHandler) Update(w http.ResponseWriter, r *http.Request) {
 	reviewID := chi.URLParam(r, "id")
+	userID, ok := getUserID(r.Context())
+	if !ok {
+		writeError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "user is not authenticated")
+		return
+	}
 
 	var req domain.UpdateReviewRequest
 	if err := decodeJSON(r, &req); err != nil {
@@ -88,7 +98,7 @@ func (h *ReviewHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	review, err := h.svc.Update(r.Context(), req.UserID, reviewID, req)
+	review, err := h.svc.Update(r.Context(), userID, reviewID, req)
 	if err != nil {
 		switch {
 		case errors.Is(err, domain.ErrReviewNotFound):
@@ -108,7 +118,11 @@ func (h *ReviewHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 func (h *ReviewHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	reviewID := chi.URLParam(r, "id")
-	var userID string
+	userID, ok := getUserID(r.Context())
+	if !ok {
+		writeError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", "user is not authenticated")
+		return
+	}
 
 	if err := decodeJSON(r, &userID); err != nil {
 		writeError(w, r, http.StatusBadRequest, "INVALID_REQUEST", "invalid json body")
