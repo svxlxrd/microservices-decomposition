@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bookshelf/books-service/internal/client"
 	"bookshelf/books-service/internal/config"
 	"bookshelf/books-service/internal/handler"
+	authmiddleware "bookshelf/books-service/internal/middleware"
 	"bookshelf/books-service/internal/repository"
 	"bookshelf/books-service/internal/service"
 	"context"
@@ -14,7 +16,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-chi/chi/middleware"
+	chimiddleware "github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/jmoiron/sqlx"
@@ -48,6 +50,9 @@ func main() {
 	bookHandler := handler.NewBookHandler(bookService)
 	reviewHandler := handler.NewReviewHandler(reviewService)
 
+	// client
+	authClient := client.NewAuthClient(cfg.AuthService.URL, cfg.AuthService.Timeout)
+
 	// router
 	r := chi.NewRouter()
 
@@ -76,28 +81,32 @@ func main() {
 	}))
 
 	// global middleware
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
+	r.Use(chimiddleware.Logger)
+	r.Use(chimiddleware.Recoverer)
 
-	// public routes
 	r.Route("/api/v1", func(r chi.Router) {
-			r.Get("/health", handler.HealthHandler)
-			r.Get("/ready", handler.ReadyHandler(db))
+		r.Get("/health", handler.HealthHandler)
+		r.Get("/ready", handler.ReadyHandler(db))
 
-		r.Route("/books", func(r chi.Router) {
-			r.Post("/", bookHandler.Create)
-			r.Get("/", bookHandler.List)
-			r.Get("/{id}", bookHandler.GetByID)
-			r.Put("/{id}", bookHandler.Update)
-			r.Delete("/{id}", bookHandler.Delete)
+		// ===== Public =====
 
-			r.Post("/{book_id}/reviews", reviewHandler.Create)
-			r.Get("/{book_id}/reviews", reviewHandler.List)
-		})
+		r.Get("/books", bookHandler.List)
+		r.Get("/books/{id}", bookHandler.GetByID)
+		r.Get("/books/{book_id}/reviews", reviewHandler.List)
 
-		r.Route("/reviews", func(r chi.Router) {
-			r.Put("/{id}", reviewHandler.Update)
-			r.Delete("/{id}", reviewHandler.Delete)
+		// ===== Protected =====
+
+		r.Group(func(r chi.Router) {
+			r.Use(authmiddleware.AuthMiddleware(authClient))
+
+			r.Post("/books", bookHandler.Create)
+			r.Put("/books/{id}", bookHandler.Update)
+			r.Delete("/books/{id}", bookHandler.Delete)
+
+			r.Post("/books/{book_id}/reviews", reviewHandler.Create)
+
+			r.Put("/reviews/{id}", reviewHandler.Update)
+			r.Delete("/reviews/{id}", reviewHandler.Delete)
 		})
 	})
 
