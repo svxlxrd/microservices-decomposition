@@ -113,6 +113,7 @@ func main() {
 	r.Route("/internal/v1/auth", func(r chi.Router) {
 		r.Post("/verify", internalHandler.VerifyToken)
 	})
+	r.Post("/internal/v1/users/batch", internalHandler.GetUsersByIDs)
 
 	// public routes
 	r.Route("/api/v1/auth", func(r chi.Router) {
