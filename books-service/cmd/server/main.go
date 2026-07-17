@@ -51,7 +51,7 @@ func main() {
 	reviewHandler := handler.NewReviewHandler(reviewService)
 
 	// client
-	authClient := client.NewAuthClient(cfg.AuthService.URL, cfg.AuthService.Timeout)
+	authClient := client.NewAuthClient(cfg.AuthService.URL, cfg.AuthService.Timeout, cfg.ServiceKey)
 
 	// router
 	r := chi.NewRouter()
