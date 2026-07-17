@@ -9,6 +9,7 @@ type Config struct {
 	Server     ServerConfig
 	Database DatabaseConfig
 	JWT      JWTConfig
+	ServiceKey string
 }
 
 type ServerConfig struct {
@@ -43,6 +44,7 @@ func Load() *Config {
 		JWT: JWTConfig{
 			Secret: getEnv("JWT_SECRET", "mock"),
 		},
+		ServiceKey: getEnv("SERVICE_KEY", ""),
 	}
 }
 
