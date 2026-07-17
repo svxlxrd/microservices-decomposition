@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
@@ -13,10 +12,11 @@ import (
 
 	"bookshelf/auth-service/internal/config"
 	"bookshelf/auth-service/internal/handler"
+	internalMiddleware "bookshelf/auth-service/internal/middleware"
 	"bookshelf/auth-service/internal/repository"
 	"bookshelf/auth-service/internal/service"
 
-	"github.com/go-chi/chi/middleware"
+	chiMiddleware "github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/jmoiron/sqlx"
@@ -70,6 +70,7 @@ func main() {
 			"Accept",
 			"Authorization",
 			"Content-Type",
+			"X-Service-Key",
 		},
 		ExposedHeaders: []string{
 			"Link",
@@ -79,41 +80,19 @@ func main() {
 	}))
 
 	// global middleware
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-
-	// health / ready handler
-	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-
-		resp := map[string]string{
-			"status": "ok",
-		}
-
-		if err := json.NewEncoder(w).Encode(resp); err != nil {
-			log.Println("failed to encode response:", err)
-			return
-		}
-	})
-
-	r.Get("/ready", func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
-		defer cancel()
-
-		if err := db.PingContext(ctx); err != nil {
-			http.Error(w, "database is unavailable", http.StatusServiceUnavailable)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("READY"))
-	})
+	r.Use(chiMiddleware.Logger)
+	r.Use(chiMiddleware.Recoverer)
 
 	// internal routes
-	r.Route("/internal/v1/auth", func(r chi.Router) {
-		r.Post("/verify", internalHandler.VerifyToken)
+	r.Route("/internal/v1", func(r chi.Router) {
+		r.Use(internalMiddleware.ServiceKeyMiddleware(cfg.ServiceKey))
+
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/verify", internalHandler.VerifyToken)
+		})
+
+		r.Post("/users/batch", internalHandler.GetUsersByIDs)
 	})
-	r.Post("/internal/v1/users/batch", internalHandler.GetUsersByIDs)
 
 	// public routes
 	r.Route("/api/v1/auth", func(r chi.Router) {
