@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -12,9 +13,11 @@ type Config struct {
 }
 
 type AuthServiceConfig struct {
-	URL        string
-	Timeout    time.Duration
-	ServiceKey string
+	URL                string
+	Timeout            time.Duration
+	ServiceKey         string
+	AuthServiceTimeout time.Duration
+	AuthServiceRetries int
 }
 
 type ServerConfig struct {
@@ -43,9 +46,11 @@ func Load() *Config {
 			),
 		},
 		AuthService: AuthServiceConfig{
-			URL:     getEnv("AUTH_SERVICE_URL", "http://localhost:8081"),
-			Timeout: getDuration("AUTH_SERVICE_TIMEOUT", 5*time.Second),
-			ServiceKey: getEnv("SERVICE_KEY", ""),
+			URL:                getEnv("AUTH_SERVICE_URL", "http://localhost:8081"),
+			Timeout:            getDuration("AUTH_SERVICE_TIMEOUT", 5*time.Second),
+			ServiceKey:         getEnv("SERVICE_KEY", ""),
+			AuthServiceTimeout: getDuration("MAX_REQUEST_TIMEOUT", 10*time.Second),
+			AuthServiceRetries: getInt("MAX_RETRIES", 3),
 		},
 	}
 }
@@ -64,5 +69,16 @@ func getDuration(key string, def time.Duration) time.Duration {
 			return d
 		}
 	}
+	return def
+}
+
+func getInt(key string, def int) int {
+	if v := os.Getenv(key); v != "" {
+		i, err := strconv.Atoi(v)
+		if err == nil {
+			return i
+		}
+	}
+
 	return def
 }
