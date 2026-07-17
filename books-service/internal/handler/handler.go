@@ -1,7 +1,9 @@
 package handler
 
 import (
+	contextkeys "bookshelf/books-service/internal/context"
 	"bookshelf/books-service/internal/domain"
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -9,14 +11,12 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type contextKey string
-
-const (
-	userIDKey    contextKey = "userID"
-	requestIDKey contextKey = "requestID"
-)
-
 // helper functions
+
+func getUserID(ctx context.Context) (string, bool) {
+	userID, ok := ctx.Value(contextkeys.UserID).(string)
+	return userID, ok
+}
 
 func writeJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
@@ -27,7 +27,7 @@ func writeJSON(w http.ResponseWriter, status int, data interface{}) {
 }
 
 func writeError(w http.ResponseWriter, r *http.Request, status int, code, message string) {
-	requestID, _ := r.Context().Value(requestIDKey).(string)
+	requestID, _ := r.Context().Value(contextkeys.RequestID).(string)
 
 	response := domain.ErrorResponse{
 		Code:      code,
@@ -39,7 +39,7 @@ func writeError(w http.ResponseWriter, r *http.Request, status int, code, messag
 }
 
 func writeValidationError(w http.ResponseWriter, r *http.Request, details []domain.ErrorDetail) {
-	requestID, _ := r.Context().Value(requestIDKey).(string)
+	requestID, _ := r.Context().Value(contextkeys.RequestID).(string)
 
 	response := domain.ErrorResponse{
 		Code:      "VALIDATION_ERROR",
