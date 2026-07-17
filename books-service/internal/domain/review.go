@@ -24,7 +24,6 @@ type Review struct {
 
 // CreateReviewRequest данные для создания рецензии
 type CreateReviewRequest struct {
-	UserID        string  `json:"user_id"`
 	Rating  int     `json:"rating"`
 	Title   *string `json:"title"`
 	Content string  `json:"content"`
@@ -32,7 +31,6 @@ type CreateReviewRequest struct {
 
 // UpdateReviewRequest данные для обновления рецензии (все поля опциональные)
 type UpdateReviewRequest struct {
-	UserID        string  `json:"user_id"`
 	Rating  *int    `json:"rating"`
 	Title   *string `json:"title"`
 	Content *string `json:"content"`

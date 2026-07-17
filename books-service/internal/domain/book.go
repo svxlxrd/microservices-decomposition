@@ -29,7 +29,6 @@ type Book struct {
 
 // CreateBookRequest данные для создания книги
 type CreateBookRequest struct {
-	UserID        string  `json:"user_id"`
 	Title         string  `json:"title"`
 	Author        string  `json:"author"`
 	Description   *string `json:"description"`
@@ -39,7 +38,6 @@ type CreateBookRequest struct {
 
 // UpdateBookRequest данные для обновления книги (все поля опциональные)
 type UpdateBookRequest struct {
-	UserID        string  `json:"user_id"`
 	Title         *string `json:"title"`
 	Author        *string `json:"author"`
 	Description   *string `json:"description"`
