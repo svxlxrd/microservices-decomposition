@@ -6,9 +6,13 @@ import (
 )
 
 type Config struct {
-	Server     ServerConfig
+	Server   ServerConfig
 	Database DatabaseConfig
 	JWT      JWTConfig
+	Internal InternalConfig
+}
+
+type InternalConfig struct {
 	ServiceKey string
 }
 
@@ -44,7 +48,9 @@ func Load() *Config {
 		JWT: JWTConfig{
 			Secret: getEnv("JWT_SECRET", "mock"),
 		},
-		ServiceKey: getEnv("SERVICE_KEY", ""),
+		Internal: InternalConfig{
+			getEnv("SERVICE_KEY", ""),
+		},
 	}
 }
 

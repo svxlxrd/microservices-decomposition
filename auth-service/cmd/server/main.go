@@ -85,7 +85,7 @@ func main() {
 
 	// internal routes
 	r.Route("/internal/v1", func(r chi.Router) {
-		r.Use(internalMiddleware.ServiceKeyMiddleware(cfg.ServiceKey))
+		r.Use(internalMiddleware.ServiceKeyMiddleware(cfg.Internal.ServiceKey))
 
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/verify", internalHandler.VerifyToken)
