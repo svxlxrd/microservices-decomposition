@@ -6,9 +6,14 @@ import (
 )
 
 type Config struct {
-	Server         ServerConfig
-	Database       DatabaseConfig
-	AuthServiceURL string
+	Server      ServerConfig
+	Database    DatabaseConfig
+	AuthService AuthServiceConfig
+}
+
+type AuthServiceConfig struct {
+	URL     string
+	Timeout time.Duration
 }
 
 type ServerConfig struct {
@@ -36,7 +41,10 @@ func Load() *Config {
 				"postgres://postgres:postgres@localhost:5433/books?sslmode=disable",
 			),
 		},
-		AuthServiceURL: getEnv("AuthServiceURL", "http://localhost:8081"),
+		AuthService: AuthServiceConfig{
+			URL: getEnv("AUTH_SERVICE_URL", "http://localhost:8081"),
+			Timeout: getDuration("AUTH_SERVICE_TIMEOUT", 5*time.Second),
+		},
 	}
 }
 
