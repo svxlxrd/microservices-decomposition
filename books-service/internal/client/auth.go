@@ -9,11 +9,13 @@ import (
 
 type AuthClient struct {
 	httpClient *HTTPClient
+	serviceKey string
 }
 
-func NewAuthClient(baseURL string, timeout time.Duration) *AuthClient {
+func NewAuthClient(baseURL string, timeout time.Duration, serviceKey string) *AuthClient {
 	return &AuthClient{
 		httpClient: NewHTTPClient(baseURL, timeout),
+		serviceKey: serviceKey,
 	}
 }
 
@@ -22,7 +24,14 @@ func (c *AuthClient) VerifyToken(ctx context.Context, token string) (*VerifyResp
 		Token: token,
 	}
 
-	resp, err := c.httpClient.Post(ctx, "/internal/v1/auth/verify", req, nil)
+	resp, err := c.httpClient.Post(
+		ctx, 
+		"/internal/v1/auth/verify", 
+		req,
+		map[string]string{
+		"X-Service-Key": c.serviceKey,},
+	)
+
 	if err != nil {
 		return nil, fmt.Errorf("verify token: %w", err)
 	}
@@ -41,7 +50,14 @@ func (c *AuthClient) GetUsersByIDs(ctx context.Context, ids []string) ([]UserPub
 		IDs: ids,
 	}
 
-	resp, err := c.httpClient.Post(ctx, "/internal/v1/users/batch", req, nil)
+	resp, err := c.httpClient.Post(
+		ctx, 
+		"/internal/v1/users/batch", 
+		req, 
+		map[string]string{
+		"X-Service-Key": c.serviceKey,},
+	)
+	
 	if err != nil {
 		return nil, fmt.Errorf("get users by ids: %w", err)
 	}
