@@ -9,6 +9,7 @@ type Config struct {
 	Server      ServerConfig
 	Database    DatabaseConfig
 	AuthService AuthServiceConfig
+	ServiceKey  string
 }
 
 type AuthServiceConfig struct {
@@ -42,9 +43,10 @@ func Load() *Config {
 			),
 		},
 		AuthService: AuthServiceConfig{
-			URL: getEnv("AUTH_SERVICE_URL", "http://localhost:8081"),
+			URL:     getEnv("AUTH_SERVICE_URL", "http://localhost:8081"),
 			Timeout: getDuration("AUTH_SERVICE_TIMEOUT", 5*time.Second),
 		},
+		ServiceKey: getEnv("SERVICE_KEY", ""),
 	}
 }
 
