@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bookshelf/books-service/internal/client"
 	contextkeys "bookshelf/books-service/internal/context"
 	"bookshelf/books-service/internal/domain"
 	"bookshelf/books-service/internal/dto"
@@ -80,9 +81,10 @@ func ReadyHandler(db *sqlx.DB) http.HandlerFunc {
 
 // health
 type HealthHandler struct {
-	db      *sqlx.DB
-	service string
-	version string
+	authClient *client.AuthClient
+	db         *sqlx.DB
+	service    string
+	version    string
 }
 
 func NewHealthHandler(db *sqlx.DB, service string, version string) *HealthHandler {
@@ -123,6 +125,69 @@ func (h *HealthHandler) Health(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, code, response)
+}
+
+func (h *HealthHandler) Ready(w http.ResponseWriter, r *http.Request) {
+	checks := map[string]dto.Check{
+		"database":     h.checkDatabase(),
+		"auth-service": h.checkAuthService(),
+	}
+
+	allReady := true
+
+	for _, check := range checks {
+		if check.Status != "ok" {
+			allReady = false
+			break
+		}
+	}
+
+	response := dto.ReadyResponse{
+		Ready:     allReady,
+		Service:   h.service,
+		Checks:    checks,
+		Timestamp: time.Now().Format(time.RFC3339),
+	}
+
+	status := http.StatusOK
+
+	if !allReady {
+		status = http.StatusServiceUnavailable
+	}
+
+	writeJSON(w, status, response)
+}
+
+func (h *HealthHandler) checkAuthService() dto.Check {
+	start := time.Now()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	resp, err := h.authClient.Health(ctx)
+
+	duration := time.Since(start).String()
+
+	if err != nil {
+		return dto.Check{
+			Status:   "error",
+			Duration: duration,
+			Error:    err.Error(),
+		}
+	}
+
+	if resp.Status != "ok" {
+		return dto.Check{
+			Status:   "error",
+			Duration: duration,
+			Error:    "auth-service is unhealthy",
+		}
+	}
+
+	return dto.Check{
+		Status:   "ok",
+		Duration: duration,
+	}
 }
 
 func (h *HealthHandler) checkDatabase() dto.Check {
