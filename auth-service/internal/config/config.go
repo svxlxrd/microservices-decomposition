@@ -10,6 +10,12 @@ type Config struct {
 	Database DatabaseConfig
 	JWT      JWTConfig
 	Internal InternalConfig
+	App      AppConfig
+}
+
+type AppConfig struct {
+	Name    string
+	Version string
 }
 
 type InternalConfig struct {
@@ -50,6 +56,10 @@ func Load() *Config {
 		},
 		Internal: InternalConfig{
 			getEnv("SERVICE_KEY", ""),
+		},
+		App: AppConfig{
+			Name: getEnv("SERVICE_NAME", "auth-service"),
+			Version: getEnv("SERVICE_VERSION", "1.0.0"),
 		},
 	}
 }
