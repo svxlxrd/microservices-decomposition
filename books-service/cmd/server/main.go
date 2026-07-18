@@ -49,6 +49,7 @@ func main() {
 	// handlers
 	bookHandler := handler.NewBookHandler(bookService)
 	reviewHandler := handler.NewReviewHandler(reviewService)
+	healthHandler := handler.NewHealthHandler(db, cfg.App.Name, cfg.App.Version)
 
 	// client
 	authClient := client.NewAuthClient(cfg.AuthService.URL, cfg.AuthService.Timeout, cfg.AuthService.ServiceKey, cfg.AuthService.AuthServiceTimeout)
@@ -85,7 +86,7 @@ func main() {
 	r.Use(chiMiddleware.Recoverer)
 
 	r.Route("/api/v1", func(r chi.Router) {
-		r.Get("/health", handler.HealthHandler)
+		r.Get("/health", healthHandler.Health)
 		r.Get("/ready", handler.ReadyHandler(db))
 
 		// ===== Public =====
