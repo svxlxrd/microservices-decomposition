@@ -87,7 +87,7 @@ func main() {
 
 	// health and ready routes
 	r.Get("/health", healthHandler.Health)
-	r.Get("/Ready", healthHandler.Ready)
+	r.Get("/ready", healthHandler.Ready)
 
 	r.Route("/api/v1", func(r chi.Router) {
 		// ===== Public =====
