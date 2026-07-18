@@ -8,6 +8,13 @@ type HealthResponse struct {
 	Timestamp string           `json:"timestamp"`
 }
 
+type ReadyResponse struct {
+    Ready       bool              `json:"ready"`
+    Service     string            `json:"service"`
+    Checks      map[string]Check  `json:"checks"`
+    Timestamp   string            `json:"timestamp"`
+}
+
 type Check struct {
 	Status   string `json:"status"`   // "ok", "error"
 	Duration string `json:"duration"` // "2ms"
