@@ -87,10 +87,9 @@ func main() {
 
 	// health and ready routes
 	r.Get("/health", healthHandler.Health)
+	r.Get("/Ready", healthHandler.Ready)
 
 	r.Route("/api/v1", func(r chi.Router) {
-		r.Get("/ready", handler.ReadyHandler(db))
-
 		// ===== Public =====
 
 		r.Get("/books", bookHandler.List)
