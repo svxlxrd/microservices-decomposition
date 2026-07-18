@@ -23,7 +23,6 @@ type HTTPClient struct {
 }
 
 func NewHTTPClient(baseURL string, timeout time.Duration, maxRetries int, retryDelay time.Duration) *HTTPClient {
-
 	if timeout == 0 {
 		timeout = 5 * time.Second
 	}
@@ -138,10 +137,6 @@ func (c *HTTPClient) do(req *http.Request) (*http.Response, error) {
 	)
 }
 
-func (c *HTTPClient) buildURL(path string) string {
-	return c.baseURL + "/" + strings.TrimLeft(path, "/")
-}
-
 func checkResponse(resp *http.Response) error {
 
 	if resp.StatusCode >= http.StatusBadRequest {
@@ -182,4 +177,3 @@ func isRetryableError(err error) bool {
 
 	return false
 }
-

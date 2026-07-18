@@ -3,10 +3,12 @@ package handler
 import (
 	contextkeys "bookshelf/books-service/internal/context"
 	"bookshelf/books-service/internal/domain"
+	"bookshelf/books-service/internal/dto"
 	"context"
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -56,18 +58,6 @@ func decodeJSON(r *http.Request, v interface{}) error {
 }
 
 // health and ready handlers
-func HealthHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	resp := map[string]string{
-		"status": "ok",
-	}
-
-	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		log.Println("failed to encode response:", err)
-		return
-	}
-}
-
 func ReadyHandler(db *sqlx.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -85,5 +75,79 @@ func ReadyHandler(db *sqlx.DB) http.HandlerFunc {
 		}); err != nil {
 			log.Println("failed to encode response:", err)
 		}
+	}
+}
+
+// health
+type HealthHandler struct {
+	db      *sqlx.DB
+	service string
+	version string
+}
+
+func NewHealthHandler(db *sqlx.DB, service string, version string) *HealthHandler {
+	return &HealthHandler{
+		db:      db,
+		service: service,
+		version: version,
+	}
+}
+
+func (h *HealthHandler) Health(w http.ResponseWriter, r *http.Request) {
+
+	checks := map[string]dto.Check{
+		"database": h.checkDatabase(),
+	}
+
+	status := "ok"
+
+	for _, check := range checks {
+		if check.Status == "error" {
+			status = "unhealthy"
+			break
+		}
+	}
+
+	response := dto.HealthResponse{
+		Status:    status,
+		Service:   h.service,
+		Version:   h.version,
+		Checks:    checks,
+		Timestamp: time.Now().Format(time.RFC3339),
+	}
+
+	code := http.StatusOK
+
+	if status == "unhealthy" {
+		code = http.StatusServiceUnavailable
+	}
+
+	writeJSON(w, code, response)
+}
+
+func (h *HealthHandler) checkDatabase() dto.Check {
+	start := time.Now()
+
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		2*time.Second,
+	)
+	defer cancel()
+
+	err := h.db.PingContext(ctx)
+
+	duration := time.Since(start).String()
+
+	if err != nil {
+		return dto.Check{
+			Status:   "error",
+			Duration: duration,
+			Error:    err.Error(),
+		}
+	}
+
+	return dto.Check{
+		Status:   "ok",
+		Duration: duration,
 	}
 }
