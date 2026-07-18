@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bookshelf/books-service/internal/dto"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -17,7 +18,7 @@ func NewAuthClient(baseURL string, timeout time.Duration, serviceKey string, req
 	return &AuthClient{
 		httpClient: NewHTTPClient(baseURL, timeout, 3, 100*time.Millisecond),
 		serviceKey: serviceKey,
-		timeout: requestTimeout,
+		timeout:    requestTimeout,
 	}
 }
 
@@ -78,4 +79,24 @@ func (c *AuthClient) GetUsersByIDs(ctx context.Context, ids []string) ([]UserPub
 	}
 
 	return result.Users, nil
+}
+
+func (c *AuthClient) Health(ctx context.Context) (*dto.HealthResponse, error) {
+	resp, err := c.httpClient.Get(ctx, "/health", nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var healthResponse dto.HealthResponse
+
+	if resp.StatusCode == 200 {
+		if err := json.NewDecoder(resp.Body).Decode(&healthResponse); err != nil {
+			return nil, fmt.Errorf("decode users response: %w", err)
+		}
+		
+		return &healthResponse, nil
+	}
+
+	return nil, fmt.Errorf("failed to get health")
 }
