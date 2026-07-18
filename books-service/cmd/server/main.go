@@ -85,8 +85,10 @@ func main() {
 	r.Use(chiMiddleware.Logger)
 	r.Use(chiMiddleware.Recoverer)
 
+	// health and ready routes
+	r.Get("/health", healthHandler.Health)
+
 	r.Route("/api/v1", func(r chi.Router) {
-		r.Get("/health", healthHandler.Health)
 		r.Get("/ready", handler.ReadyHandler(db))
 
 		// ===== Public =====
