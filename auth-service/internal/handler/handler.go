@@ -134,9 +134,9 @@ func ReadyHandler(db *sqlx.DB) http.HandlerFunc {
 // health
 
 type HealthHandler struct {
-	db      *sqlx.DB
-	service string
-	version string
+	db         *sqlx.DB
+	service    string
+	version    string
 }
 
 func NewHealthHandler(db *sqlx.DB, service string, version string) *HealthHandler {
