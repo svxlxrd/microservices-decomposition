@@ -56,7 +56,7 @@ func Load() *Config {
 			AuthServiceTimeout: getDuration("MAX_REQUEST_TIMEOUT", 10*time.Second),
 		},
 		App: AppConfig{
-			Name:    getEnv("SERVICE_NAME", "auth-service"),
+			Name:    getEnv("SERVICE_NAME", "books-service"),
 			Version: getEnv("SERVICE_VERSION", "1.0.0"),
 		},
 	}
