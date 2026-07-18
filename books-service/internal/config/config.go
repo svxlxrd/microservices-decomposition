@@ -2,7 +2,6 @@ package config
 
 import (
 	"os"
-	"strconv"
 	"time"
 )
 
@@ -10,6 +9,12 @@ type Config struct {
 	Server      ServerConfig
 	Database    DatabaseConfig
 	AuthService AuthServiceConfig
+	App         AppConfig
+}
+
+type AppConfig struct {
+	Name    string
+	Version string
 }
 
 type AuthServiceConfig struct {
@@ -17,7 +22,6 @@ type AuthServiceConfig struct {
 	Timeout            time.Duration
 	ServiceKey         string
 	AuthServiceTimeout time.Duration
-	AuthServiceRetries int
 }
 
 type ServerConfig struct {
@@ -50,7 +54,10 @@ func Load() *Config {
 			Timeout:            getDuration("AUTH_SERVICE_TIMEOUT", 5*time.Second),
 			ServiceKey:         getEnv("SERVICE_KEY", ""),
 			AuthServiceTimeout: getDuration("MAX_REQUEST_TIMEOUT", 10*time.Second),
-			AuthServiceRetries: getInt("MAX_RETRIES", 3),
+		},
+		App: AppConfig{
+			Name:    getEnv("SERVICE_NAME", "auth-service"),
+			Version: getEnv("SERVICE_VERSION", "1.0.0"),
 		},
 	}
 }
@@ -69,16 +76,5 @@ func getDuration(key string, def time.Duration) time.Duration {
 			return d
 		}
 	}
-	return def
-}
-
-func getInt(key string, def int) int {
-	if v := os.Getenv(key); v != "" {
-		i, err := strconv.Atoi(v)
-		if err == nil {
-			return i
-		}
-	}
-
 	return def
 }
