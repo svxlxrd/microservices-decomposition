@@ -84,6 +84,10 @@ func main() {
 	r.Use(chiMiddleware.Logger)
 	r.Use(chiMiddleware.Recoverer)
 
+	// health and ready routes
+	r.Get("/health", healthHandler.Health)
+
+
 	// internal routes
 	r.Route("/internal/v1", func(r chi.Router) {
 		r.Use(internalMiddleware.ServiceKeyMiddleware(cfg.Internal.ServiceKey))
@@ -97,7 +101,6 @@ func main() {
 
 	// public routes
 	r.Route("/api/v1/auth", func(r chi.Router) {
-		r.Get("/health", healthHandler.Health)
 		r.Get("/ready", handler.ReadyHandler(db))
 		r.Post("/register", authHandler.Register)
 		r.Post("/login", authHandler.Login)
