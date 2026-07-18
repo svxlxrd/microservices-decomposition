@@ -50,6 +50,7 @@ func main() {
 	// handler
 	authHandler := handler.NewAuthHandler(userService)
 	internalHandler := handler.NewInternalHandler(userService)
+	healthHandler := handler.NewHealthHandler(db, cfg.App.Name, cfg.App.Version)
 
 	// router
 	r := chi.NewRouter()
@@ -96,7 +97,7 @@ func main() {
 
 	// public routes
 	r.Route("/api/v1/auth", func(r chi.Router) {
-		r.Get("/health", handler.HealthHandler)
+		r.Get("/health", healthHandler.Health)
 		r.Get("/ready", handler.ReadyHandler(db))
 		r.Post("/register", authHandler.Register)
 		r.Post("/login", authHandler.Login)
