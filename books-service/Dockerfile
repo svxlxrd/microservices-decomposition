@@ -6,24 +6,31 @@ WORKDIR /app
 # Git нужен для загрузки некоторых Go-модулей
 RUN apk add --no-cache git
 
-# Сначала go.mod — для кэширования слоёв (go.sum не обязателен)
-COPY go.mod ./
+# Копируем зависимости отдельно для кэширования
+COPY go.mod go.sum ./
 RUN go mod download
 
 # Исходный код
 COPY . .
 
-# Статический бинарник для Linux (точка входа — cmd/server, как в этапах проекта)
-RUN CGO_ENABLED=0 GOOS=linux go build -o /books-service ./cmd/server
+# Сборка статического бинарника
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -trimpath \
+    -ldflags="-s -w" \
+    -o /books-service ./cmd/server
 
 # Этап 2: рантайм
 FROM alpine:3.19
 
-RUN apk --no-cache add ca-certificates tzdata wget
+RUN apk --no-cache add ca-certificates tzdata wget \
+    && addgroup -S app \
+    && adduser -S -G app app
 
 WORKDIR /app
 
-COPY --from=builder /books-service .
+COPY --from=builder --chown=app:app /books-service .
+
+USER app
 
 EXPOSE 8082
 
