@@ -1,6 +1,6 @@
 module bookshelf/books-service
 
-go 1.26.2
+go 1.25
 
 require (
 	github.com/go-chi/chi v1.5.5
