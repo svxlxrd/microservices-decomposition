@@ -1,7 +1,7 @@
 -- Seed data for Books Service
 -- Note: user IDs must match those in Auth Service
 
-INSERT INTO books (id, title, author, description, isbn, published_year, created_by, created_at, updated_at) VALUES
+INSERT INTO books (id, title, author, description, isbn, published_year, user_id, created_at, updated_at) VALUES
 ('f5eebc99-9c0b-4ef8-bb6d-6bb9bd380b01', 'Чистая архитектура', 'Роберт Мартин', 'Практическое руководство по программной архитектуре от легендарного Дядюшки Боба.', '978-5-4461-0772-8', 2018, 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', '2024-01-15 10:00:00+00', '2024-01-15 10:00:00+00'),
 ('f6eebc99-9c0b-4ef8-bb6d-6bb9bd380b02', 'Чистый код', 'Роберт Мартин', 'Справочник для создания читаемого, поддерживаемого и эффективного кода.', '978-5-4461-0960-9', 2008, 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', '2024-01-16 11:30:00+00', '2024-01-16 11:30:00+00'),
 ('f7eebc99-9c0b-4ef8-bb6d-6bb9bd380b03', 'Паттерны проектирования', 'Банда четырёх', 'Классическая книга о паттернах объектно-ориентированного проектирования.', '978-5-496-00389-0', 1994, 'b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a12', '2024-01-20 09:00:00+00', '2024-01-20 09:00:00+00'),
