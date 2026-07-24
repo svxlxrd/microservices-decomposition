@@ -124,7 +124,7 @@ func ReadyHandler(db *sqlx.DB) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 
 		if err := json.NewEncoder(w).Encode(map[string]string{
-			"status": "ready",
+			"status": "ok",
 		}); err != nil {
 			log.Println("failed to encode response:", err)
 		}
