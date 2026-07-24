@@ -9,10 +9,10 @@ type HealthResponse struct {
 }
 
 type ReadyResponse struct {
-    Ready       bool              `json:"ready"`
-    Service     string            `json:"service"`
-    Checks      map[string]Check  `json:"checks"`
-    Timestamp   string            `json:"timestamp"`
+    Status    string           `json:"status"`
+    Service   string           `json:"service"`
+    Checks    map[string]Check `json:"checks"`
+    Timestamp string           `json:"timestamp"`
 }
 
 type Check struct {
