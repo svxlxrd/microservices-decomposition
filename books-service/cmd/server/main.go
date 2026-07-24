@@ -46,13 +46,13 @@ func main() {
 	bookService := service.NewBookService(bookRepo)
 	reviewService := service.NewReviewService(reviewRepo, bookRepo)
 
+	// client
+	authClient := client.NewAuthClient(cfg.AuthService.URL, cfg.AuthService.Timeout, cfg.AuthService.ServiceKey, cfg.AuthService.AuthServiceTimeout)
+
 	// handlers
 	bookHandler := handler.NewBookHandler(bookService)
 	reviewHandler := handler.NewReviewHandler(reviewService)
-	healthHandler := handler.NewHealthHandler(db, cfg.App.Name, cfg.App.Version)
-
-	// client
-	authClient := client.NewAuthClient(cfg.AuthService.URL, cfg.AuthService.Timeout, cfg.AuthService.ServiceKey, cfg.AuthService.AuthServiceTimeout)
+	healthHandler := handler.NewHealthHandler(authClient, db, cfg.App.Name, cfg.App.Version)
 
 	// router
 	r := chi.NewRouter()
