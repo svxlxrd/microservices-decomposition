@@ -7,7 +7,6 @@ import (
 	"bookshelf/books-service/internal/dto"
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 	"time"
 
@@ -58,28 +57,7 @@ func decodeJSON(r *http.Request, v interface{}) error {
 	return json.NewDecoder(r.Body).Decode(v)
 }
 
-// health and ready handlers
-func ReadyHandler(db *sqlx.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		if err := db.PingContext(ctx); err != nil {
-			http.Error(w, "database unavailable", http.StatusServiceUnavailable)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-
-		if err := json.NewEncoder(w).Encode(map[string]string{
-			"status": "ready",
-		}); err != nil {
-			log.Println("failed to encode response:", err)
-		}
-	}
-}
-
-// health
+// health and ready
 type HealthHandler struct {
 	authClient *client.AuthClient
 	db         *sqlx.DB
@@ -87,8 +65,9 @@ type HealthHandler struct {
 	version    string
 }
 
-func NewHealthHandler(db *sqlx.DB, service string, version string) *HealthHandler {
+func NewHealthHandler(authClient *client.AuthClient, db *sqlx.DB, service string, version string) *HealthHandler {
 	return &HealthHandler{
+		authClient: authClient,
 		db:      db,
 		service: service,
 		version: version,
@@ -134,6 +113,7 @@ func (h *HealthHandler) Ready(w http.ResponseWriter, r *http.Request) {
 	}
 
 	allReady := true
+	readyStatus := "error"
 
 	for _, check := range checks {
 		if check.Status != "ok" {
@@ -142,8 +122,12 @@ func (h *HealthHandler) Ready(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if allReady == true {
+		readyStatus = "ok"
+	}
+
 	response := dto.ReadyResponse{
-		Ready:     allReady,
+		Status:     readyStatus,
 		Service:   h.service,
 		Checks:    checks,
 		Timestamp: time.Now().Format(time.RFC3339),
